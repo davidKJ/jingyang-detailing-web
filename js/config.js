@@ -11,5 +11,5 @@ const CONFIG = {
   LIFF_ID: '2010854195-TVruYdxE',
 
   // Apps Script → 部署 → 網頁應用程式網址（結尾為 /exec）
-  API_URL: 'https://script.google.com/macros/s/AKfycby6UjcH4zvVWSKdneF_24Kt0zw1zv1ntVr8OgW_mYPlFHVN2ls5Sk8Tr-t688GlFfM/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbwauEntIC0hSlujuO5XS9Sa0fDkls3evBWbohMzdA2y-KZ_tsCpBX-oBOZ82dklk_E/exec',
 };
