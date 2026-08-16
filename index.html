@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>晶漾車體防護中心 — 客戶管理</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+
+<!-- ── 載入中 ────────────────────────────────────────── -->
+<div id="view-loading" class="view active center">
+  <div class="spinner"></div>
+  <p class="muted">載入中…</p>
+</div>
+
+<!-- ── 未授權 ────────────────────────────────────────── -->
+<div id="view-denied" class="view center">
+  <h2>無使用權限</h2>
+  <p class="muted">此 LINE 帳號尚未登記為系統使用者。</p>
+  <div class="userid-box">
+    <label>你的 LINE userId</label>
+    <code id="denied-userid">—</code>
+    <button class="btn-secondary" id="btn-copy-userid">複製</button>
+  </div>
+  <p class="hint">請把上面這串 userId 交給管理者，在 Apps Script 執行
+    <code>addAuthUser("userId", "顯示名稱")</code> 後重新整理。</p>
+  <button class="btn-secondary" id="btn-relogin">重新登入</button>
+</div>
+
+<!-- ── 錯誤 ──────────────────────────────────────────── -->
+<div id="view-error" class="view center">
+  <h2>發生錯誤</h2>
+  <p id="error-message" class="error-text"></p>
+  <button class="btn-secondary" onclick="location.reload()">重新載入</button>
+</div>
+
+<!-- ── 主畫面 ────────────────────────────────────────── -->
+<div id="view-main" class="view">
+  <header class="app-header">
+    <h1>晶漾車體防護中心</h1>
+    <span class="user-chip" id="user-name"></span>
+  </header>
+
+  <div class="layout">
+    <nav class="nav">
+      <button class="nav-btn active" data-page="page-new">
+        <span class="nav-icon">＋</span><span>新增紀錄</span>
+      </button>
+      <button class="nav-btn" data-page="page-search">
+        <span class="nav-icon">🔍</span><span>查詢車輛</span>
+      </button>
+    </nav>
+
+    <main class="content">
+
+      <!-- 頁面：新增施工紀錄 -->
+      <section id="page-new" class="page active">
+        <h2 class="page-title">新增施工紀錄</h2>
+
+        <form id="form-record" autocomplete="off">
+          <div class="form-grid">
+
+            <!-- 步驟 1：車牌 -->
+            <fieldset class="card span-all">
+              <legend>1. 車牌</legend>
+              <div class="field">
+                <label for="f-plate">車牌 <span class="req">*</span></label>
+                <input type="text" id="f-plate" name="plate" placeholder="ABC-1234"
+                       inputmode="text" autocapitalize="characters" required>
+                <p class="field-hint" id="plate-status"></p>
+              </div>
+
+              <!-- 已存在的車輛：顯示帶出的資料 -->
+              <div id="vehicle-known" class="known-box hidden">
+                <div class="known-row"><span>車款</span><b id="known-model">—</b></div>
+                <div class="known-row"><span>顏色</span><b id="known-color">—</b></div>
+                <div class="known-row"><span>車主</span><b id="known-owner">—</b></div>
+                <div class="known-row"><span>上次施工</span><b id="known-last">—</b></div>
+              </div>
+
+              <!-- 新車牌：展開建檔欄位 -->
+              <div id="vehicle-new" class="new-box hidden">
+                <p class="notice">查無此車牌，請一併建立車輛與車主資料。</p>
+                <div class="sub-grid">
+                  <div class="field">
+                    <label for="f-model">車款</label>
+                    <input type="text" id="f-model" placeholder="例：Focus">
+                  </div>
+                  <div class="field">
+                    <label for="f-color">車身顏色</label>
+                    <input type="text" id="f-color" placeholder="例：白">
+                  </div>
+                  <div class="field">
+                    <label for="f-owner">車主姓名 <span class="req">*</span></label>
+                    <input type="text" id="f-owner">
+                  </div>
+                  <div class="field">
+                    <label for="f-phone">電話</label>
+                    <input type="tel" id="f-phone" inputmode="numeric" placeholder="0912345678">
+                  </div>
+                  <div class="field">
+                    <label for="f-birthday">生日</label>
+                    <input type="date" id="f-birthday">
+                    <p class="field-hint">客戶不願給年份時可留空，之後在客戶管理補。</p>
+                  </div>
+                  <div class="field">
+                    <label for="f-source">來店管道</label>
+                    <select id="f-source">
+                      <option value="">—</option>
+                      <option>介紹</option><option>廣告</option>
+                      <option>路過</option><option>其他</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- 步驟 2：日期 -->
+            <fieldset class="card">
+              <legend>2. 施工日期</legend>
+              <div class="field">
+                <input type="date" id="f-date" required>
+              </div>
+            </fieldset>
+
+            <!-- 步驟 3：業務類別 -->
+            <fieldset class="card">
+              <legend>3. 業務類別 <span class="req">*</span></legend>
+              <div class="choice-group" id="category-group">
+                <button type="button" class="choice" data-value="打蠟鍍膜">打蠟鍍膜</button>
+                <button type="button" class="choice" data-value="車體包膜">車體包膜</button>
+              </div>
+            </fieldset>
+
+            <!-- 步驟 4：品項 / 品牌 / 保固 -->
+            <fieldset class="card span-all" id="fs-item" disabled>
+              <legend>4. 施工內容</legend>
+              <div class="sub-grid">
+                <div class="field">
+                  <label for="f-item">施工品項 <span class="req">*</span></label>
+                  <select id="f-item" required>
+                    <option value="">請先選擇業務類別</option>
+                  </select>
+                </div>
+                <div class="field hidden" id="wrap-item-other">
+                  <label for="f-item-other">品項說明</label>
+                  <input type="text" id="f-item-other" placeholder="請輸入實際品項">
+                </div>
+
+                <!-- 只有車體包膜才出現 -->
+                <div class="field hidden" id="wrap-brand">
+                  <label for="f-brand">使用品牌</label>
+                  <select id="f-brand"><option value="">—</option></select>
+                </div>
+                <div class="field hidden" id="wrap-warranty">
+                  <label for="f-warranty">保固年限（年）<span class="req">*</span></label>
+                  <input type="number" id="f-warranty" min="1" max="20" step="1" inputmode="numeric">
+                  <p class="field-hint">沒填就不會有到期提醒，所以包膜必填。</p>
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- 步驟 5：金額 -->
+            <fieldset class="card span-all">
+              <legend>5. 金額與收款</legend>
+              <div class="sub-grid">
+                <div class="field">
+                  <label for="f-amount">消費金額 <span class="req">*</span></label>
+                  <input type="number" id="f-amount" min="0" step="1" inputmode="numeric" required>
+                </div>
+                <div class="field">
+                  <label for="f-payment">收款狀態 <span class="req">*</span></label>
+                  <select id="f-payment" required>
+                    <option value="已收">已收</option>
+                    <option value="未收">未收</option>
+                    <option value="收訂金">收訂金</option>
+                  </select>
+                </div>
+                <div class="field hidden" id="wrap-paid">
+                  <label for="f-paid">已收金額</label>
+                  <input type="number" id="f-paid" min="0" step="1" inputmode="numeric">
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- 步驟 6：選填 -->
+            <fieldset class="card span-all">
+              <legend>6. 其他 <span class="optional">（可跳過，事後再補）</span></legend>
+              <div class="field">
+                <label for="f-feedback">客戶反應</label>
+                <textarea id="f-feedback" rows="2"></textarea>
+              </div>
+            </fieldset>
+
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="btn-submit">送出</button>
+          </div>
+        </form>
+
+        <!-- 送出成功 -->
+        <div id="submit-success" class="success-box hidden">
+          <h3>✓ 已儲存</h3>
+          <p id="success-detail" class="muted"></p>
+          <div class="success-actions">
+            <button class="btn-secondary" id="btn-add-another">再新增一筆（沿用同車輛與日期）</button>
+            <button class="btn-secondary" id="btn-new-blank">新增其他車輛</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 頁面：查詢車輛 -->
+      <section id="page-search" class="page">
+        <h2 class="page-title">查詢車輛歷史</h2>
+
+        <div class="search-bar">
+          <input type="search" id="f-search" placeholder="車牌 / 客戶姓名 / 電話">
+          <button class="btn-primary" id="btn-search">搜尋</button>
+        </div>
+        <p class="field-hint">車牌可只輸入部分，大小寫與連字號都不影響。</p>
+
+        <div id="search-results"></div>
+        <div id="vehicle-detail"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
