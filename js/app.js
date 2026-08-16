@@ -16,9 +16,20 @@
   const show = (el) => el && el.classList.remove('hidden');
   const hide = (el) => el && el.classList.add('hidden');
 
+  const VIEW_IDS = ['view-loading', 'view-denied', 'view-error', 'view-main'];
+
+  /**
+   * 用原生 hidden 屬性切換畫面，不靠 class 名稱。
+   *
+   * 曾經發生過「無使用權限」和「新增施工紀錄」兩個畫面同時顯示、疊在一起」的狀況，
+   * 懷疑是 LINE 內建瀏覽器在登入跳轉後把舊頁面狀態（bfcache）還原回來，
+   * 導致 class 沒有被正確清除。hidden 屬性的優先權高於一般 CSS，比較不會被殘留狀態蓋過。
+   */
   function showView(id) {
-    document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
-    $(id).classList.add('active');
+    VIEW_IDS.forEach((vid) => {
+      const el = $(vid);
+      if (el) el.hidden = (vid !== id);
+    });
   }
 
   function toast(msg, isError) {
@@ -382,5 +393,21 @@
     })[ch]);
   }
 
-  init();
+  // 若頁面是從瀏覽器的返回快取（bfcache）還原，而不是重新載入，
+  // 直接強制整頁重新整理。這種還原方式會跳過 <script> 的正常執行，
+  // 可能讓畫面停在還原當下的舊狀態（例如登入前的「無使用權限」畫面），
+  // 是先前「兩個畫面疊在一起」的可疑成因之一。
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) location.reload();
+  });
+
+  // 防止 init() 被意外呼叫兩次（例如某些內建瀏覽器在登入導回後重複觸發載入事件）
+  // 而讓兩個畫面的 showView() 各自成功、疊出兩個畫面同時顯示的狀況。
+  let started = false;
+  function start() {
+    if (started) return;
+    started = true;
+    init();
+  }
+  start();
 })();

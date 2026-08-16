@@ -26,8 +26,9 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-.view { display: none; }
-.view.active { display: block; }
+/* 用 [hidden] 屬性搭配 !important 控制畫面顯示，確保不會被其他規則（例如 .center 的 display:flex）蓋過。
+   曾經因為只用 class 切換，遇到 LINE 內建瀏覽器還原舊頁面狀態時，兩個畫面同時顯示疊在一起。 */
+.view[hidden] { display: none !important; }
 .hidden { display: none !important; }
 
 .center {

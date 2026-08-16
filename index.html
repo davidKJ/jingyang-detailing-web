@@ -10,13 +10,13 @@
 <body>
 
 <!-- ── 載入中 ────────────────────────────────────────── -->
-<div id="view-loading" class="view active center">
+<div id="view-loading" class="view center">
   <div class="spinner"></div>
   <p class="muted">載入中…</p>
 </div>
 
 <!-- ── 未授權 ────────────────────────────────────────── -->
-<div id="view-denied" class="view center">
+<div id="view-denied" class="view center" hidden>
   <h2>無使用權限</h2>
   <p class="muted">此 LINE 帳號尚未登記為系統使用者。</p>
   <div class="userid-box">
@@ -30,14 +30,14 @@
 </div>
 
 <!-- ── 錯誤 ──────────────────────────────────────────── -->
-<div id="view-error" class="view center">
+<div id="view-error" class="view center" hidden>
   <h2>發生錯誤</h2>
   <p id="error-message" class="error-text"></p>
   <button class="btn-secondary" onclick="location.reload()">重新載入</button>
 </div>
 
 <!-- ── 主畫面 ────────────────────────────────────────── -->
-<div id="view-main" class="view">
+<div id="view-main" class="view" hidden>
   <header class="app-header">
     <h1>晶漾車體防護中心</h1>
     <span class="user-chip" id="user-name"></span>
